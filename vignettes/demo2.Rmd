@@ -1,0 +1,116 @@
+---
+title: "Demonstration of automated Natural Language Processing 2"
+author: "Ian Hussey^[Ghent University. Email: ian.hussey@ugent.be]"
+date: "`r format(Sys.time(), '%d %B %Y')`"
+output:
+  pdf_document:
+    highlight: haddock
+---
+
+# Interpersonal vs temporal
+
+```{r echo=FALSE, fig.height=4, fig.width=6, message=FALSE, warning=FALSE}
+
+# dependencies
+
+library(simpleNLP)
+library(tidyverse)
+library(effsize)
+
+# process data
+
+obama1 <- read.csv("../data/obama1.csv", header = FALSE) %>%
+  mutate(id = "obama1")
+
+trump1 <- read.csv("../data/trump1.csv", header = FALSE) %>%
+  mutate(id = "trump1")
+
+data <- rbind(obama1, trump1) %>%
+  tidyr::separate(V1, c("a", "b", "c", "d", "e", "f", "g", "h", "i", "j"), sep = "\\.", extra = "warn", fill = "right") %>%
+  rownames_to_column() %>%
+  mutate(rowname = as.integer(rowname)) %>%
+  gather(key = temp, value = parcel, c("a", "b", "c", "d", "e", "f", "g", "h", "i", "j")) %>%
+  arrange(rowname, id) %>%
+  mutate(parcel = ifelse(parcel %in% c("", " ", "<d3>", "<ca> "), NA, parcel)) %>%
+  na.omit() %>%
+  select(-rowname, -temp)
+  
+tidy_data <- tidy_parcels(data = data)
+
+categorized_data <- tidy_data %>%
+  group_by(id) %>%
+  categorize_parcels(data = ., dictionary = relations)
+
+# plot
+# 
+# subset <- categorized_data %>%
+#   filter(category %in% c("Interpersonal", "Temporal"))
+
+categorized_data %>%
+  filter(id == "obama1") %>%
+  plot_percentages(data = .)
+
+categorized_data %>%
+  filter(id == "trump1") %>%
+  plot_percentages(data = .)
+
+# analyse
+
+t.test(percent ~ category,
+       data = subset,
+       paired = FALSE)
+
+cohen.d(formula = percent ~ category,
+        data = subset,
+        paired = FALSE)
+
+```
+
+# Interpersonal self vs others
+
+```{r echo=FALSE, fig.height=4, fig.width=6, message=FALSE, warning=FALSE}
+
+# plot 
+
+subset <- categorized_data %>%
+  filter(category %in% c("Self", "Others"))
+
+plot_percentages(data = subset)
+
+# analyse
+
+t.test(percent ~ category,
+       data = subset,
+       paired = FALSE)
+
+cohen.d(formula = percent ~ category,
+        data = subset,
+        paired = FALSE)
+
+```
+
+# Positive vs negative valence/sentiment
+
+```{r echo=FALSE, fig.height=4, fig.width=6, message=FALSE, warning=FALSE}
+
+# process data
+
+tidy_data <- tidy_parcels(data = reddit_suicide_data)
+
+categorized_data <- categorize_parcels(data = tidy_data, dictionary = valence)
+
+# plot
+
+plot_percentages(categorized_data)
+
+# analyse
+
+t.test(percent ~ category,
+       data = categorized_data,
+       paired = FALSE)
+
+cohen.d(formula = percent ~ category,
+        data = categorized_data,
+        paired = FALSE)
+
+```

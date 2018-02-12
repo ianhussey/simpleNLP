@@ -1,0 +1,37 @@
+
+# convert custom csv lexicons to RData
+
+```{r}
+
+relations <- read.csv("relations.csv") %>%
+  mutate(word = as.character(word))
+
+save(relations, file = "relations.RData")
+
+```
+
+
+# alter lexicons from other packages
+
+```{r}
+
+emotions <- sentiments %>%  # from tidytext. 
+  filter(lexicon == "nrc") %>%
+  filter(sentiment != "positive" & sentiment != "negative") %>%
+  select(-score, -lexicon) %>%
+  rename(category = sentiment)
+
+save(emotions, file = "emotions.RData")
+
+
+valence <- sentiments %>%  # from tidytext. 
+  filter(lexicon == "bing") %>%
+  select(-score, -lexicon) %>%
+  rename(category = sentiment) %>%
+  mutate(category = recode(category,
+                           "positive" = "Positive",
+                           "negative" = "Negative"))
+
+save(valence, file = "valence.RData")
+
+```

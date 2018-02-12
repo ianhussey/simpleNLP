@@ -1,0 +1,92 @@
+---
+title: "NLP vignette"
+author: "Ian Hussey^[Ghent University. Email: ian.hussey@ugent.be]"
+date: "`r format(Sys.time(), '%d %B %Y')`"
+output:
+  pdf_document:
+    highlight: haddock
+---
+
+# Interpersonal vs temporal
+
+```{r fig.height=4, fig.width=6, message=FALSE, warning=FALSE}
+
+# dependencies
+
+library(simpleNLP)
+library(tidyverse)
+library(effsize)
+
+# process data
+
+tidy_data <- tidy_parcels(data = reddit_suicide_data)
+
+categorized_data <- categorize_parcels(data = tidy_data, dictionary = relations)
+
+# plot
+
+subset <- categorized_data %>%
+  filter(category %in% c("Interpersonal", "Temporal"))
+
+plot_percentages(subset)
+
+# analyse
+
+t.test(percent ~ category,
+       data = subset,
+       paired = FALSE)
+
+cohen.d(formula = percent ~ category,
+        data = subset,
+        paired = FALSE)
+
+```
+
+# Interpersonal self vs others
+
+```{r fig.height=4, fig.width=6, message=FALSE, warning=FALSE}
+
+# plot 
+
+subset <- categorized_data %>%
+  filter(category %in% c("Self", "Others"))
+
+plot_percentages(data = subset)
+
+# analyse
+
+t.test(percent ~ category,
+       data = subset,
+       paired = FALSE)
+
+cohen.d(formula = percent ~ category,
+        data = subset,
+        paired = FALSE)
+
+```
+
+# Positive vs negative valence/sentiment
+
+```{r fig.height=4, fig.width=6, message=FALSE, warning=FALSE}
+
+# process data
+
+tidy_data <- tidy_parcels(data = reddit_suicide_data)
+
+categorized_data <- categorize_parcels(data = tidy_data, dictionary = valence)
+
+# plot
+
+plot_percentages(categorized_data)
+
+# analyse
+
+t.test(percent ~ category,
+       data = categorized_data,
+       paired = FALSE)
+
+cohen.d(formula = percent ~ category,
+        data = categorized_data,
+        paired = FALSE)
+
+```

@@ -1,0 +1,113 @@
+---
+title: "Demonstration of automated Natural Language Processing"
+author: "Ian Hussey^[Ghent University. Email: ian.hussey@ugent.be]"
+date: "`r format(Sys.time(), '%d %B %Y')`"
+output:
+  pdf_document:
+    highlight: haddock
+---
+
+This is a very simple demonstation of the automatic classification of text according to predefined word categories. This is sometimes referred to as Natural Language Processing, Sentiment Analysis (when the valence of words is be analysed), or a few other terms. 
+
+I purposefully chose a data source that was too large to analyse by hand: Data was scraped from a Reddit.com/r/askreddit thread on individuals' first thought upon waking up after surviving a suicide attempt. c.2000 responses with a mean of c.120 words each.
+
+Categorisations are done at the "parsel" level, where a parself represents an individual comment. A parsel could equally represent questions and answers in an exchange, utterances within set time periods, or therapeutic sessions. 
+
+The below simply plots and statistically compares the proportion of words that are made up by different categories. Many other, more complex analyses are also possilbe. E.g., network analyses of specific words, or categories (e.g., what words cooccured with what others in a given statement), analyses of the temporal dynamics of categories across time, or between groups, etc. 
+
+Deeper semantic understanding is also possible. E.g., the below counts "not bad" as an instance of a negative word (bad) rather than a positive meaning (good). Other libraries can pull out this deeper meaning among words. The below serves as an accessible demo however. 
+
+# Interpersonal vs temporal
+
+```{r echo=FALSE, fig.height=4, fig.width=6, message=FALSE, warning=FALSE}
+
+# dependencies
+
+library(simpleNLP)
+library(tidyverse)
+library(effsize)
+
+# process data
+
+tidy_data <- tidy_parcels(data = reddit_suicide_data)
+
+categorized_data <- categorize_parcels(data = tidy_data, dictionary = relations)
+
+# plot
+
+subset <- categorized_data %>%
+  filter(category %in% c("Interpersonal", "Temporal"))
+
+plot_percentages(subset)
+
+# analyse
+
+t.test(percent ~ category,
+       data = subset,
+       paired = FALSE)
+
+cohen.d(formula = percent ~ category,
+        data = subset,
+        paired = FALSE)
+
+```
+
+# Interpersonal self vs others
+
+```{r echo=FALSE, fig.height=4, fig.width=6, message=FALSE, warning=FALSE}
+
+# plot 
+
+subset <- categorized_data %>%
+  filter(category %in% c("Self", "Others"))
+
+plot_percentages(data = subset)
+
+# analyse
+
+t.test(percent ~ category,
+       data = subset,
+       paired = FALSE)
+
+cohen.d(formula = percent ~ category,
+        data = subset,
+        paired = FALSE)
+
+```
+
+# Positive vs negative valence/sentiment
+
+```{r echo=FALSE, fig.height=4, fig.width=6, message=FALSE, warning=FALSE}
+
+# process data
+
+tidy_data <- tidy_parcels(data = reddit_suicide_data)
+
+categorized_data <- categorize_parcels(data = tidy_data, dictionary = valence)
+
+# plot
+
+plot_percentages(categorized_data)
+
+# analyse
+
+t.test(percent ~ category,
+       data = categorized_data,
+       paired = FALSE)
+
+cohen.d(formula = percent ~ category,
+        data = categorized_data,
+        paired = FALSE)
+
+```
+
+
+More complex plots and analyses are of course possible. E.g., changes across parcels (i.e., across time, within a conversation, session, etc)
+
+```{r echo=FALSE, fig.height=4, fig.width=6, message=FALSE, warning=FALSE}
+
+ggplot(categorized_data) +
+  geom_smooth(aes(x = parcel_number, y = percent, color = category), method = "loess") +
+  theme_classic()
+
+```
